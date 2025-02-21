@@ -7,6 +7,8 @@ require('dotenv').config();
 require("reflect-metadata");
 const express_1 = __importDefault(require("express"));
 const typeorm_1 = require("typeorm");
+const User_1 = require("./entities/User");
+const Post_1 = require("./entities/Post");
 const main = async () => {
     await (0, typeorm_1.createConnection)({
         type: 'postgres',
@@ -14,7 +16,8 @@ const main = async () => {
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         logging: true,
-        synchronize: true
+        synchronize: true,
+        entities: [User_1.User, Post_1.Post]
     });
     const app = (0, express_1.default)();
     app.listen(4000, () => console.log("connect 4000"));
