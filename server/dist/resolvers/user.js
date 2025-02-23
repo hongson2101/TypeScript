@@ -19,34 +19,53 @@ exports.UserResolver = void 0;
 const User_1 = require("../entities/User");
 const type_graphql_1 = require("type-graphql");
 const argon2_1 = __importDefault(require("argon2"));
+const UserMutationRespone_1 = require("../types/UserMutationRespone");
+const RegisterInput_1 = require("../types/RegisterInput");
 let UserResolver = class UserResolver {
-    async register(email, username, password) {
+    async register({ username, email, password }) {
         try {
-            const existingUser = await User_1.User.findOne({ where: { username: username } });
+            const existingUser = await User_1.User.findOne({ where: [{ username: username }, { email: email }] });
             if (existingUser)
-                return null;
+                return {
+                    code: 400,
+                    success: false,
+                    message: 'Data duplicate',
+                    error: [
+                        {
+                            field: existingUser.username === username ? 'username' : 'email',
+                            message: `${existingUser.username === username ? 'username' : 'email'} exists `
+                        }
+                    ]
+                };
             const hashedPassword = await argon2_1.default.hash(password);
             const newUser = User_1.User.create({
                 username,
                 password: hashedPassword,
                 email
             });
-            return await User_1.User.save(newUser);
+            return {
+                code: 200,
+                success: true,
+                message: 'User registration successful',
+                user: await User_1.User.save(newUser)
+            };
         }
         catch (error) {
             console.log(error);
-            return null;
+            return {
+                code: 500,
+                success: false,
+                message: `Internal server error ${error.message}`
+            };
         }
     }
 };
 exports.UserResolver = UserResolver;
 __decorate([
-    (0, type_graphql_1.Mutation)(_return => User_1.User, { nullable: true }),
-    __param(0, (0, type_graphql_1.Arg)('email')),
-    __param(1, (0, type_graphql_1.Arg)('username')),
-    __param(2, (0, type_graphql_1.Arg)('password')),
+    (0, type_graphql_1.Mutation)(_return => UserMutationRespone_1.UserMutationResponse, { nullable: true }),
+    __param(0, (0, type_graphql_1.Arg)('registerInput')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [RegisterInput_1.RegisterInput]),
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "register", null);
 exports.UserResolver = UserResolver = __decorate([
