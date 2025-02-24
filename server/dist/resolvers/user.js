@@ -21,9 +21,14 @@ const type_graphql_1 = require("type-graphql");
 const argon2_1 = __importDefault(require("argon2"));
 const UserMutationRespone_1 = require("../types/UserMutationRespone");
 const RegisterInput_1 = require("../types/RegisterInput");
+const validateRegisterInput_1 = require("../utils/validateRegisterInput");
 let UserResolver = class UserResolver {
-    async register({ username, email, password }) {
+    async register(registerInput) {
+        const validateRegisterInputErrors = (0, validateRegisterInput_1.validateRegisterInput)(registerInput);
+        if (validateRegisterInputErrors !== null)
+            return Object.assign({ code: 400, success: false }, validateRegisterInputErrors);
         try {
+            const { username, email, password } = registerInput;
             const existingUser = await User_1.User.findOne({ where: [{ username: username }, { email: email }] });
             if (existingUser)
                 return {
