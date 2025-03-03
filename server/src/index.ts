@@ -9,6 +9,8 @@ import { buildSchema } from 'type-graphql'
 import { HelloResolver } from './resolvers/hello'
 import { UserResolver } from './resolvers/user'
 import { ApolloServerPluginLandingPageGraphQLPlayground} from 'apollo-server-core'
+import mongoose from 'mongoose'
+
 
 const main = async() =>{
     await createConnection({
@@ -22,6 +24,14 @@ const main = async() =>{
     })
 
 const app = express();
+
+//session/
+await mongoose.connect(`mongodb+srv://vipford01:Admin@123456@typescript.n0wex.mongodb.net/?retryWrites=true&w=majority&appName=TypeScript`, {
+    serverApi: { version: '1', strict: true, deprecationErrors: true }
+})
+
+console.log("MongoDB Connect")
+
 const apolloServer = new ApolloServer({
     schema: await buildSchema({ resolvers: [HelloResolver,UserResolver], validate: false}),
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground()]

@@ -14,6 +14,7 @@ const type_graphql_1 = require("type-graphql");
 const hello_1 = require("./resolvers/hello");
 const user_1 = require("./resolvers/user");
 const apollo_server_core_1 = require("apollo-server-core");
+const mongoose_1 = __importDefault(require("mongoose"));
 const main = async () => {
     await (0, typeorm_1.createConnection)({
         type: 'postgres',
@@ -25,6 +26,10 @@ const main = async () => {
         entities: [User_1.User, Post_1.Post]
     });
     const app = (0, express_1.default)();
+    await mongoose_1.default.connect(`mongodb+srv://vipford01:Admin@123456@typescript.n0wex.mongodb.net/?retryWrites=true&w=majority&appName=TypeScript`, {
+        serverApi: { version: '1', strict: true, deprecationErrors: true }
+    });
+    console.log("MongoDB Connect");
     const apolloServer = new apollo_server_express_1.ApolloServer({
         schema: await (0, type_graphql_1.buildSchema)({ resolvers: [hello_1.HelloResolver, user_1.UserResolver], validate: false }),
         plugins: [(0, apollo_server_core_1.ApolloServerPluginLandingPageGraphQLPlayground)()]

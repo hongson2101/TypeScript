@@ -22,6 +22,7 @@ const argon2_1 = __importDefault(require("argon2"));
 const UserMutationRespone_1 = require("../types/UserMutationRespone");
 const RegisterInput_1 = require("../types/RegisterInput");
 const validateRegisterInput_1 = require("../utils/validateRegisterInput");
+const LoginInput_1 = require("../types/LoginInput");
 let UserResolver = class UserResolver {
     async register(registerInput) {
         const validateRegisterInputErrors = (0, validateRegisterInput_1.validateRegisterInput)(registerInput);
@@ -64,15 +65,62 @@ let UserResolver = class UserResolver {
             };
         }
     }
+    async login(loginInput) {
+        try {
+            const existingUser = await User_1.User.findOne({ where: loginInput.usernameOrEmail.includes('@') ? { email: loginInput.usernameOrEmail } : { username: loginInput.usernameOrEmail } });
+            if (!existingUser)
+                return {
+                    code: 400,
+                    success: false,
+                    message: 'User not found',
+                    error: [
+                        {
+                            field: 'usernameOremail', message: 'Username or Email incorrect'
+                        }
+                    ]
+                };
+            const passwordValid = await argon2_1.default.verify(existingUser.password, loginInput.password);
+            if (!passwordValid)
+                return {
+                    code: 400,
+                    success: false,
+                    message: 'Wrong pass',
+                    error: [{
+                            field: 'pass', message: 'Wrong pass'
+                        }]
+                };
+            return {
+                code: 200,
+                success: true,
+                message: 'Login successfully',
+                user: existingUser
+            };
+        }
+        catch (error) {
+            console.log(error);
+            return {
+                code: 500,
+                success: false,
+                message: `Internal server error ${error.message}`
+            };
+        }
+    }
 };
 exports.UserResolver = UserResolver;
 __decorate([
-    (0, type_graphql_1.Mutation)(_return => UserMutationRespone_1.UserMutationResponse, { nullable: true }),
+    (0, type_graphql_1.Mutation)(_return => UserMutationRespone_1.UserMutationResponse),
     __param(0, (0, type_graphql_1.Arg)('registerInput')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [RegisterInput_1.RegisterInput]),
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "register", null);
+__decorate([
+    (0, type_graphql_1.Mutation)(_return => UserMutationRespone_1.UserMutationResponse),
+    __param(0, (0, type_graphql_1.Arg)('loginInput')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [LoginInput_1.LoginInput]),
+    __metadata("design:returntype", Promise)
+], UserResolver.prototype, "login", null);
 exports.UserResolver = UserResolver = __decorate([
     (0, type_graphql_1.Resolver)()
 ], UserResolver);

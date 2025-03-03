@@ -4,11 +4,12 @@ import argon2  from "argon2";
 import { UserMutationResponse } from "../types/UserMutationRespone";
 import { RegisterInput } from "../types/RegisterInput";
 import { validateRegisterInput } from "../utils/validateRegisterInput";
+import { LoginInput } from "../types/LoginInput";
 
 
 @Resolver()
 export class UserResolver{
-    @Mutation(_return => UserMutationResponse, {nullable:true})
+    @Mutation(_return => UserMutationResponse)
     async register(
         @Arg('registerInput') registerInput: RegisterInput
     ): Promise<UserMutationResponse>
@@ -62,4 +63,50 @@ export class UserResolver{
         }
         
     }
+
+    @Mutation(_return => UserMutationResponse)
+    async login(@Arg('loginInput') loginInput: LoginInput) : Promise<UserMutationResponse>{
+        try {
+            const existingUser = await User.findOne({where: loginInput.usernameOrEmail.includes('@') ? { email : loginInput.usernameOrEmail} : {username : loginInput.usernameOrEmail}})
+    
+            if (!existingUser)
+                return {
+                    code: 400,
+                    success: false,
+                    message: 'User not found',
+                    error:[
+                        {
+                            field: 'usernameOremail', message:'Username or Email incorrect'
+                        }
+                    ]
+                }
+            
+            const passwordValid = await argon2.verify(existingUser.password, loginInput.password)
+
+            if(!passwordValid)
+                return{
+                    code: 400,
+                    success: false,
+                    message: 'Wrong pass',
+                    error:[{
+                        field:'pass', message:'Wrong pass'
+                    }]
+                }
+            
+            return {
+                code:200,
+                success: true,
+                message: 'Login successfully',
+                user: existingUser
+            }
+        } catch (error) {
+            console.log(error)
+            return {
+                code: 500,
+                success: false,
+                message: `Internal server error ${error.message}`  
+            }
+        }
+            
+    }    
 }
